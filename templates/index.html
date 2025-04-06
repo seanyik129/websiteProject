@@ -1,75 +1,223 @@
 {% extends 'base.html' %}
 
-{% block title %}香港旅游指南 - 首页{% endblock %}
+{% block title %}首页 - 香港旅游推荐{% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- 首页横幅 -->
-    <div class="bg-image p-5 text-center shadow-1-strong rounded mb-5 text-white"
-         style="background-image: url('{{ url_for('static', filename='images/hong_kong_skyline.jpg') }}'); height: 400px; background-size: cover; background-position: center;">
-        <div class="d-flex justify-content-center align-items-center h-100">
-            <div class="bg-dark bg-opacity-50 p-4 rounded">
-                <h1 class="mb-3">探索香港的美丽与魅力</h1>
-                <h4 class="mb-3">亚洲国际大都会的购物、美食与景点</h4>
-                <a class="btn btn-primary" href="{{ url_for('list_attractions') }}">浏览景点</a>
+<div class="jumbotron p-4 bg-light rounded-3 mb-4">
+    <h1 class="display-4">欢迎来到香港旅游推荐!</h1>
+    <p class="lead">探索香港最受欢迎的景点，发现隐藏的宝藏，规划您的完美行程。</p>
+    <hr class="my-4">
+    <p>浏览不同类别的景点，或者生成随机路线来探索这座城市。</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('random_route') }}" role="button">生成随机路线</a>
+</div>
+
+<!-- 热门类别卡片 -->
+<h2 class="mb-4">探索香港</h2>
+<div class="row mb-5">
+    <div class="col-md-4 mb-3">
+        <div class="card category-card">
+            <div class="card-body text-center">
+                <h4 class="card-title">打卡胜地</h4>
+                <p class="card-text">探索香港最值得拍照的地点</p>
+                <a href="{{ url_for('list_attractions', category='打卡') }}" class="btn btn-outline-primary">查看景点</a>
             </div>
         </div>
     </div>
-
-    <!-- 区域导航 -->
-    <section class="mb-5">
-        <h2 class="mb-4">香港热门区域</h2>
-        <div class="row">
-            {% for category in categories %}
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ category.name }}</h5>
-                        <p class="card-text">{{ category.description }}</p>
-                        <a href="{{ url_for('list_attractions', category_id=category.id) }}" class="btn btn-outline-primary">探索{{ category.name }}</a>
-                    </div>
-                </div>
+    <div class="col-md-4 mb-3">
+        <div class="card category-card">
+            <div class="card-body text-center">
+                <h4 class="card-title">文化体验</h4>
+                <p class="card-text">感受香港独特的文化魅力</p>
+                <a href="{{ url_for('list_attractions', category='文化體驗') }}" class="btn btn-outline-primary">查看景点</a>
             </div>
-            {% endfor %}
         </div>
-    </section>
-
-    <!-- 热门景点 -->
-    <section class="mb-5">
-        <h2 class="mb-4">推荐景点</h2>
-        <div class="row">
-            {% for attraction in featured_attractions %}
-            <div class="col-md-3 mb-4">
-                <div class="card h-100">
-                    <img src="{{ url_for('static', filename='images/' + attraction.image_url) }}" class="card-img-top" alt="{{ attraction.name }}" style="height: 150px; object-fit: cover;">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ attraction.name }}</h5>
-                        <p class="card-text">{{ attraction.description[:100] }}{% if attraction.description|length > 100 %}...{% endif %}</p>
-                        <a href="{{ url_for('attraction_detail', id=attraction.id) }}" class="btn btn-sm btn-primary">查看详情</a>
-                    </div>
-                </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card category-card">
+            <div class="card-body text-center">
+                <h4 class="card-title">美食天堂</h4>
+                <p class="card-text">品尝香港地道美食</p>
+                <a href="{{ url_for('list_attractions', category='美食') }}" class="btn btn-outline-primary">查看景点</a>
             </div>
-            {% endfor %}
         </div>
-    </section>
-
-    <!-- 关于香港 -->
-    <section class="row mb-5">
-        <div class="col-md-6">
-            <h2>关于香港</h2>
-            <p>香港是一个充满活力的国际大都市，融合了东方与西方文化的独特魅力。这座城市以其壮观的天际线、美食天堂的美誉和丰富的购物选择而闻名于世。</p>
-            <p>从繁华的市中心到宁静的离岛，从传统的庙宇到现代的摩天大楼，香港提供了各种各样的体验，满足不同游客的需求。</p>
-        </div>
-        <div class="col-md-6">
-            <h2>旅游小贴士</h2>
-            <ul class="list-group">
-                <li class="list-group-item">香港的公共交通系统便捷高效，包括地铁、巴士、电车和渡轮</li>
-                <li class="list-group-item">建议购买八达通卡，可用于各种公共交通和便利店</li>
-                <li class="list-group-item">香港天气湿热，夏季(5-9月)温度高且多雨</li>
-                <li class="list-group-item">冬季(12-2月)相对凉爽干燥，是旅游的好时机</li>
-                <li class="list-group-item">香港是购物天堂，但记得货比三家</li>
-            </ul>
-        </div>
-    </section>
+    </div>
 </div>
+
+<div class="row mb-5">
+    <div class="col-md-4 mb-3">
+        <div class="card category-card">
+            <div class="card-body text-center">
+                <h4 class="card-title">购物天地</h4>
+                <p class="card-text">探索香港多元化的购物场所</p>
+                <a href="{{ url_for('list_attractions', category='購物') }}" class="btn btn-outline-primary">查看景点</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card category-card">
+            <div class="card-body text-center">
+                <h4 class="card-title">观光胜地</h4>
+                <p class="card-text">欣赏香港著名的景观</p>
+                <a href="{{ url_for('list_attractions', category='觀光') }}" class="btn btn-outline-primary">查看景点</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card category-card">
+            <div class="card-body text-center">
+                <h4 class="card-title">娱乐体验</h4>
+                <p class="card-text">享受香港多样化的娱乐活动</p>
+                <a href="{{ url_for('list_attractions', category='娛樂') }}" class="btn btn-outline-primary">查看景点</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 推荐景点 -->
+<h2 class="mb-4">推荐景点</h2>
+<div class="row">
+    {% for attraction in featured_attractions %}
+    <div class="col-md-6 mb-4">
+        <div class="card attraction-card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ attraction['Attraction'] }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ attraction['District'] }}</h6>
+                <p class="card-text">
+                    <span class="badge bg-info">{{ attraction['Category'] }}</span>
+                </p>
+                <a href="{{ url_for('attraction_detail', id=attraction['id']) }}" class="btn btn-primary">查看详情</a>
+                {% if attraction['Google Map Link'] %}
+                <a href="{{ attraction['Google Map Link'] }}" class="btn btn-outline-secondary" target="_blank">
+                    <i class="fas fa-map-marker-alt"></i> 查看地图
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 区域探索 -->
+<div class="mt-5">
+    <h2 class="mb-4">探索香港各区域</h2>
+    <div class="map-container" id="map"></div>
+    <div class="mt-3">
+        <p class="text-muted">点击地图上的标记查看详细信息。</p>
+    </div>
+</div>
+
+<!-- 热门区域 -->
+<h2 class="mt-5 mb-4">热门区域</h2>
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="card district-card">
+            <div class="card-body text-center">
+                <h4 class="card-title">中西区</h4>
+                <p class="card-text">香港的中心地带，拥有众多历史建筑和现代景点</p>
+                <a href="{{ url_for('list_attractions', district='中西區') }}" class="btn btn-outline-primary">查看景点</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card district-card">
+            <div class="card-body text-center">
+                <h4 class="card-title">油尖旺</h4>
+                <p class="card-text">香港最繁华的购物和娱乐区域之一</p>
+                <a href="{{ url_for('list_attractions', district='油尖旺') }}" class="btn btn-outline-primary">查看景点</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card district-card">
+            <div class="card-body text-center">
+                <h4 class="card-title">东区</h4>
+                <p class="card-text">香港岛东部，拥有独特的建筑和拍照胜地</p>
+                <a href="{{ url_for('list_attractions', district='東 區') }}" class="btn btn-outline-primary">查看景点</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .category-card, .district-card {
+        transition: transform 0.3s;
+        height: 100%;
+    }
+    .category-card:hover, .district-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .map-container {
+        height: 500px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .attraction-card {
+        transition: transform 0.3s;
+    }
+    .attraction-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap" async defer></script>
+<script>
+function initMap() {
+    // 香港中心坐标
+    const hkCenter = { lat: 22.3193, lng: 114.1694 };
+    const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 11,
+        center: hkCenter,
+        mapId: "8e0a97af9386fef",
+        mapTypeControl: false,
+        streetViewControl: false
+    });
+
+    // 添加景点标记
+    {% for attraction in featured_attractions %}
+    // 从Google地图链接中提取坐标
+    const mapLink = "{{ attraction['Google Map Link'] }}";
+    let lat, lng;
+
+    // 尝试不同的模式匹配坐标
+    const latLngMatch = mapLink.match(/@([\d.]+),([\d.]+)/);
+    const coordsMatch = mapLink.match(/!3d([\d.]+)!4d([\d.]+)/);
+
+    if (latLngMatch) {
+        lat = parseFloat(latLngMatch[1]);
+        lng = parseFloat(latLngMatch[2]);
+    } else if (coordsMatch) {
+        lat = parseFloat(coordsMatch[1]);
+        lng = parseFloat(coordsMatch[2]);
+    }
+
+    if (lat && lng) {
+        const marker = new google.maps.Marker({
+            position: { lat: lat, lng: lng },
+            map: map,
+            title: "{{ attraction['Attraction'] }}"
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `<div style="max-width: 200px;">
+                        <strong>{{ attraction['Attraction'] }}</strong><br>
+                        <span class="badge bg-info">{{ attraction['Category'] }}</span><br>
+                        <small>{{ attraction['District'] }}</small><br>
+                        <a href="{{ url_for('attraction_detail', id=attraction['id']) }}">查看详情</a>
+                      </div>`
+        });
+
+        marker.addListener("click", () => {
+            infoWindow.open(map, marker);
+        });
+    }
+    {% endfor %}
+}
+</script>
 {% endblock %}

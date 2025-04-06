@@ -1,0 +1,142 @@
+<!-- templates/random_route.html -->
+{% extends 'base.html' %}
+
+{% block title %}随机探索路线{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <h1 class="card-title">随机探索路线</h1>
+        <p class="lead">这是为您生成的包含 {{ count }} 个景点的随机路线</p>
+
+        <form action="{{ url_for('random_route') }}" method="get" class="mb-4">
+            <div class="row align-items-end">
+                <div class="col-auto">
+                    <label for="count" class="form-label">景点数量</label>
+                    <input type="number" class="form-control" id="count" name="count" min="1" max="10" value="{{ count }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">重新生成</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="map-container" id="map" style="height: 500px;"></div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">路线景点列表</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for attraction in route %}
+                <li class="list-group-item">
+                    <h5 class="mb-1">{{ loop.index }}. {{ attraction['Attraction'] }}</h5>
+                    <p class="mb-1 text-muted">{{ attraction['District'] }}</p>
+                    <div>
+                        <span class="badge bg-info">{{ attraction['Category'] }}</span>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ url_for('attraction_detail', id=attraction['id']) }}" class="btn btn-sm btn-primary">查看详情</a>
+                        <a href="{{ attraction['Google Map Link'] }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                            <i class="fas fa-map-marker-alt"></i> 地图
+                        </a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>路线规划建议</h3>
+    </div>
+    <div class="card-body">
+        <p>根据随机生成的景点，您可以按以下方式规划您的行程：</p>
+
+        <ol>
+            {% for attraction in route %}
+            <li class="mb-3">
+                <h5>{{ attraction['Attraction'] }}</h5>
+                <p>位于{{ attraction['District'] }}，适合{{ attraction['Category'] }}。</p>
+            </li>
+            {% endfor %}
+        </ol>
+
+        <p class="mt-4">
+            <strong>温馨提示：</strong> 请根据景点之间的距离和您的兴趣调整实际游览顺序。可以使用Google地图或公共交通工具规划您的交通路线。
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap" async defer></script>
+<script>
+function initMap() {
+    // 香港中心坐标
+    const hkCenter = { lat: 22.3193, lng: 114.1694 };
+    const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 11,
+        center: hkCenter,
+    });
+
+    const bounds = new google.maps.LatLngBounds();
+    const markers = [];
+    const infoWindows = [];
+
+    // 添加景点标记
+    {% for attraction in route %}
+    // 从Google地图链接中提取坐标
+    const mapLink{{ loop.index }} = "{{ attraction['Google Map Link'] }}";
+    const latLngMatch{{ loop.index }} = mapLink{{ loop.index }}.match(/@([\d.]+),([\d.]+)/);
+
+    if (latLngMatch{{ loop.index }}) {
+        const lat = parseFloat(latLngMatch{{ loop.index }}[1]);
+        const lng = parseFloat(latLngMatch{{ loop.index }}[2]);
+        const position = { lat: lat, lng: lng };
+
+        const marker = new google.maps.Marker({
+            position: position,
+            map: map,
+            title: "{{ attraction['Attraction'] }}",
+            label: "{{ loop.index }}"
+        });
+
+        markers.push(marker);
+        bounds.extend(position);
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `<strong>{{ loop.index }}. {{ attraction['Attraction'] }}</strong><br>
+                      {{ attraction['Category'] }}<br>
+                      <a href="{{ url_for('attraction_detail', id=attraction['id']) }}">查看详情</a>`
+        });
+
+        infoWindows.push(infoWindow);
+
+        marker.addListener("click", () => {
+            infoWindows.forEach(info => info.close());
+            infoWindow.open(map, marker);
+        });
+    }
+    {% endfor %}
+
+    // 调整地图以显示所有标记
+    if (markers.length > 0) {
+        map.fitBounds(bounds);
+    }
+
+    // 如果只有一个标记，设置适当的缩放级别
+    if (markers.length === 1) {
+        map.setZoom(14);
+    }
+}
+</script>
+{% endblock %}

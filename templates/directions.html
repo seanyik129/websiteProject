@@ -1,57 +1,68 @@
+<!-- templates/directions.html -->
 {% extends 'base.html' %}
 
-{% block title %}香港旅游指南 - 前往{{ attraction.name }}的路线{% endblock %}
+{% block title %}前往{{ attraction['Attraction'] }}的路线{% endblock %}
 
 {% block content %}
-<div class="container">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('list_attractions') }}">景点</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('attraction_detail', id=attraction.id) }}">{{ attraction.name }}</a></li>
-            <li class="breadcrumb-item active">路线指引</li>
-        </ol>
-    </nav>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('attraction_detail', id=attraction['id']) }}">{{ attraction['Attraction'] }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">获取路线</li>
+    </ol>
+</nav>
 
-    <h1>前往{{ attraction.name }}的路线</h1>
-    <p class="lead">输入您当前位置，获取路线指引</p>
+<div class="card mb-4">
+    <div class="card-body">
+        <h1 class="card-title">前往{{ attraction['Attraction'] }}的路线</h1>
+        <p class="card-text">使用下方的地图查看到达此景点的路线。您可以输入起点查询详细的交通指引。</p>
+    </div>
+</div>
 
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">路线规划</div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="originInput" class="form-label">您的当前位置</label>
-                        <input type="text" class="form-control" id="originInput" placeholder="输入地址或地标">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">交通方式</label>
-                        <div class="btn-group w-100" role="group">
-                            <input type="radio" class="btn-check" name="travelMode" id="drivingMode" value="DRIVING" checked>
-                            <label class="btn btn-outline-primary" for="drivingMode">驾车</label>
-
-                            <input type="radio" class="btn-check" name="travelMode" id="transitMode" value="TRANSIT">
-                            <label class="btn btn-outline-primary" for="transitMode">公交</label>
-
-                            <input type="radio" class="btn-check" name="travelMode" id="walkingMode" value="WALKING">
-                            <label class="btn btn-outline-primary" for="walkingMode">步行</label>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary w-100" id="getDirectionsBtn">获取路线</button>
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">输入起点</h5>
+                <div class="input-group mb-3">
+                    <input type="text" id="origin-input" class="form-control" placeholder="您的起点位置">
+                    <button class="btn btn-primary" id="calculate-route">获取路线</button>
                 </div>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">交通方式:</label>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="travel-mode" id="mode-driving" value="DRIVING" checked>
+                        <label class="btn btn-outline-primary" for="mode-driving">驾车</label>
 
-            <div class="card" id="directionsPanel" style="display: none;">
-                <div class="card-header bg-success text-white">路线指引</div>
-                <div class="card-body" id="directionsResult">
-                    <!-- 路线指引将在这里显示 -->
+                        <input type="radio" class="btn-check" name="travel-mode" id="mode-transit" value="TRANSIT">
+                        <label class="btn btn-outline-primary" for="mode-transit">公交</label>
+
+                        <input type="radio" class="btn-check" name="travel-mode" id="mode-walking" value="WALKING">
+                        <label class="btn btn-outline-primary" for="mode-walking">步行</label>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-8">
-            <div id="map" style="height: 600px;"></div>
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">景点信息</h5>
+                <p><strong>名称:</strong> {{ attraction['Attraction'] }}</p>
+                <p><strong>类别:</strong> {{ attraction['Category'] }}</p>
+                <p><strong>地区:</strong> {{ attraction['District'] }}</p>
+                <a href="{{ attraction['Google Map Link'] }}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-map-marker-alt"></i> 在Google地图中查看
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div id="map" style="height: 400px;"></div>
+                <div id="directions-panel" class="mt-3"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -60,70 +71,78 @@
 {% block scripts %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initMap" async defer></script>
 <script>
-    let map, directionsService, directionsRenderer, autocomplete;
-    const destination = { lat: {{ attraction.latitude }}, lng: {{ attraction.longitude }} };
+let map;
+let directionsService;
+let directionsRenderer;
+let destinationLatLng;
 
-    function initMap() {
-        // 初始化地图
+function initMap() {
+    // 从Google地图链接中提取坐标
+    const mapLink = "{{ attraction['Google Map Link'] }}";
+    const latLngMatch = mapLink.match(/@([\d.]+),([\d.]+)/);
+
+    if (latLngMatch) {
+        const lat = parseFloat(latLngMatch[1]);
+        const lng = parseFloat(latLngMatch[2]);
+
+        destinationLatLng = { lat: lat, lng: lng };
         map = new google.maps.Map(document.getElementById("map"), {
             zoom: 14,
-            center: destination,
+            center: destinationLatLng,
         });
 
-        // 设置目的地标记
         const marker = new google.maps.Marker({
-            position: destination,
+            position: destinationLatLng,
             map: map,
-            title: "{{ attraction.name }}"
+            title: "{{ attraction['Attraction'] }}"
         });
 
         // 初始化路线服务
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({
-            map: map,
-            panel: document.getElementById("directionsResult")
+        directionsRenderer = new google.maps.DirectionsRenderer();
+        directionsRenderer.setMap(map);
+        directionsRenderer.setPanel(document.getElementById("directions-panel"));
+
+        // 添加输入框自动完成功能
+        const originInput = document.getElementById('origin-input');
+        const autocomplete = new google.maps.places.Autocomplete(originInput);
+        autocomplete.bindTo('bounds', map);
+
+        // 添加路线计算按钮事件
+        document.getElementById('calculate-route').addEventListener('click', calculateRoute);
+
+        // 添加交通方式选择事件
+        document.querySelectorAll('input[name="travel-mode"]').forEach(input => {
+            input.addEventListener('change', calculateRoute);
         });
+    } else {
+        document.getElementById("map").innerHTML = "<p class='text-center p-5'>无法获取地图坐标</p>";
+    }
+}
 
-        // 设置地址自动完成
-        autocomplete = new google.maps.places.Autocomplete(
-            document.getElementById("originInput"),
-            {
-                componentRestrictions: { country: "hk" },
-                fields: ["formatted_address", "geometry", "name"]
-            }
-        );
-
-        // 点击获取路线按钮时计算路线
-        document.getElementById("getDirectionsBtn").addEventListener("click", calculateAndDisplayRoute);
+function calculateRoute() {
+    const origin = document.getElementById('origin-input').value;
+    if (!origin) {
+        alert('请输入起点位置');
+        return;
     }
 
-    function calculateAndDisplayRoute() {
-        const origin = document.getElementById("originInput").value;
-        if (!origin) {
-            alert("请输入您的当前位置");
-            return;
+    // 获取选中的交通方式
+    const mode = document.querySelector('input[name="travel-mode"]:checked').value;
+
+    const request = {
+        origin: origin,
+        destination: destinationLatLng,
+        travelMode: google.maps.TravelMode[mode]
+    };
+
+    directionsService.route(request, function(result, status) {
+        if (status == 'OK') {
+            directionsRenderer.setDirections(result);
+        } else {
+            alert('无法计算路线，请检查您的输入: ' + status);
         }
-
-        // 获取选中的交通方式
-        const travelMode = document.querySelector('input[name="travelMode"]:checked').value;
-
-        directionsService.route(
-            {
-                origin: origin,
-                destination: { lat: {{ attraction.latitude }}, lng: {{ attraction.longitude }} },
-                travelMode: google.maps.TravelMode[travelMode]
-            },
-            (response, status) => {
-                if (status === "OK") {
-                    directionsRenderer.setDirections(response);
-                    document.getElementById("directionsPanel").style.display = "block";
-                } else {
-                    document.getElementById("directionsResult").innerHTML =
-                        `<div class="alert alert-danger">无法计算路线: ${status}</div>`;
-                    document.getElementById("directionsPanel").style.display = "block";
-                }
-            }
-        );
-    }
+    });
+}
 </script>
 {% endblock %}

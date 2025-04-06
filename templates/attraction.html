@@ -1,71 +1,70 @@
+<!-- templates/attraction.html -->
 {% extends 'base.html' %}
 
-{% block title %}香港旅游指南 - {{ attraction.name }}{% endblock %}
+{% block title %}{{ attraction['Attraction'] }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('list_attractions') }}">景点</a></li>
-                    {% if attraction.category %}
-                    <li class="breadcrumb-item"><a href="{{ url_for('list_attractions', category_id=attraction.category_id) }}">{{ attraction.category.name }}</a></li>
-                    {% endif %}
-                    <li class="breadcrumb-item active">{{ attraction.name }}</li>
-                </ol>
-            </nav>
-            
-            <h1 class="mb-3">{{ attraction.name }}</h1>
-            
-            <div class="mb-4">
-                <img src="{{ url_for('static', filename='images/' + attraction.image_url) }}" class="img-fluid rounded" alt="{{ attraction.name }}">
-            </div>
-            
-            <div class="mb-4">
-                <h3>关于{{ attraction.name }}</h3>
-                <p class="lead">{{ attraction.description }}</p>
-            </div>
-            
-            <div class="mb-4">
-                <a href="{{ url_for('get_directions', id=attraction.id) }}" class="btn btn-primary">获取前往路线</a>
-                <a href="{{ url_for('list_attractions') }}" class="btn btn-outline-secondary ms-2">查看所有景点</a>
-            </div>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('list_attractions', category=attraction['Category']) }}">{{ attraction['Category'] }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ attraction['Attraction'] }}</li>
+    </ol>
+</nav>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h1 class="card-title">{{ attraction['Attraction'] }}</h1>
+        <h3 class="text-muted">{{ attraction['Attraction_EN'] }}</h3>
+
+        <div class="d-flex flex-wrap mt-3 mb-3">
+            <span class="badge bg-info me-2">{{ attraction['Category'] }}</span>
+            <span class="badge bg-secondary me-2">{{ attraction['District'] }}</span>
         </div>
-        
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">位置信息</h5>
-                </div>
+
+        {% if attraction['Remarks'] and attraction['Remarks']|length > 0 %}
+        <h5 class="mt-4">备注:</h5>
+        <p>{{ attraction['Remarks'] }}</p>
+        {% endif %}
+
+        <div class="mt-4">
+            <a href="{{ attraction['Google Map Link'] }}" class="btn btn-primary" target="_blank">
+                <i class="fas fa-map-marker-alt"></i> 在Google地图中查看
+            </a>
+            <a href="{{ url_for('get_directions', id=attraction['id']) }}" class="btn btn-outline-primary">
+                <i class="fas fa-directions"></i> 获取路线
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h2 class="mb-3">位置</h2>
+    <div class="map-container" id="map"></div>
+</div>
+
+<div class="mt-5">
+    <h2 class="mb-3">附近景点</h2>
+    <div class="row">
+        {% for i in range(1, 5) %}
+        {% set nearby_id = (attraction['id'] + i) % (categories|length + 1) %}
+        {% if nearby_id == 0 %}{% set nearby_id = 1 %}{% endif %}
+        {% set nearby = data_manager.get_attraction_by_id(nearby_id) %}
+        {% if nearby %}
+        <div class="col-md-6 mb-3">
+            <div class="card attraction-card">
                 <div class="card-body">
-                    <div id="map" style="height: 300px;"></div>
-                </div>
-            </div>
-            
-            <div class="card mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">游客提示</h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex">
-                            <i class="bi bi-clock me-3"></i>
-                            <span>建议游玩时间：1-2小时</span>
-                        </li>
-                        <li class="list-group-item d-flex">
-                            <i class="bi bi-cash me-3"></i>
-                            <span>最佳季节：全年</span>
-                        </li>
-                        <li class="list-group-item d-flex">
-                            <i class="bi bi-star me-3"></i>
-                            <span>附近有餐厅和购物设施</span>
-                        </li>
-                    </ul>
+                    <h5 class="card-title">{{ nearby['Attraction'] }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ nearby['District'] }}</h6>
+                    <p class="card-text">
+                        <span class="badge bg-info">{{ nearby['Category'] }}</span>
+                    </p>
+                    <a href="{{ url_for('attraction_detail', id=nearby['id']) }}" class="btn btn-primary">查看详情</a>
                 </div>
             </div>
         </div>
+        {% endif %}
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
@@ -73,17 +72,38 @@
 {% block scripts %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap" async defer></script>
 <script>
-    function initMap() {
-        const attractionLocation = { lat: {{ attraction.latitude }}, lng: {{ attraction.longitude }} };
+function initMap() {
+    // 从Google地图链接中提取坐标
+    const mapLink = "{{ attraction['Google Map Link'] }}";
+    const latLngMatch = mapLink.match(/@([\d.]+),([\d.]+)/);
+
+    if (latLngMatch) {
+        const lat = parseFloat(latLngMatch[1]);
+        const lng = parseFloat(latLngMatch[2]);
+
+        const attractionLocation = { lat: lat, lng: lng };
         const map = new google.maps.Map(document.getElementById("map"), {
             zoom: 15,
             center: attractionLocation,
         });
+
         const marker = new google.maps.Marker({
             position: attractionLocation,
             map: map,
-            title: "{{ attraction.name }}"
+            title: "{{ attraction['Attraction'] }}"
         });
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `<strong>{{ attraction['Attraction'] }}</strong><br>
+                      {{ attraction['Category'] }}`
+        });
+
+        marker.addListener("click", () => {
+            infoWindow.open(map, marker);
+        });
+    } else {
+        document.getElementById("map").innerHTML = "<p class='text-center p-5'>无法获取地图坐标</p>";
     }
+}
 </script>
 {% endblock %}
