@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}香港旅游指南 - {{ attraction.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('list_attractions') }}">景点</a></li>
+                    {% if attraction.category %}
+                    <li class="breadcrumb-item"><a href="{{ url_for('list_attractions', category_id=attraction.category_id) }}">{{ attraction.category.name }}</a></li>
+                    {% endif %}
+                    <li class="breadcrumb-item active">{{ attraction.name }}</li>
+                </ol>
+            </nav>
+            
+            <h1 class="mb-3">{{ attraction.name }}</h1>
+            
+            <div class="mb-4">
+                <img src="{{ url_for('static', filename='images/' + attraction.image_url) }}" class="img-fluid rounded" alt="{{ attraction.name }}">
+            </div>
+            
+            <div class="mb-4">
+                <h3>关于{{ attraction.name }}</h3>
+                <p class="lead">{{ attraction.description }}</p>
+            </div>
+            
+            <div class="mb-4">
+                <a href="{{ url_for('get_directions', id=attraction.id) }}" class="btn btn-primary">获取前往路线</a>
+                <a href="{{ url_for('list_attractions') }}" class="btn btn-outline-secondary ms-2">查看所有景点</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">位置信息</h5>
+                </div>
+                <div class="card-body">
+                    <div id="map" style="height: 300px;"></div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">游客提示</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex">
+                            <i class="bi bi-clock me-3"></i>
+                            <span>建议游玩时间：1-2小时</span>
+                        </li>
+                        <li class="list-group-item d-flex">
+                            <i class="bi bi-cash me-3"></i>
+                            <span>最佳季节：全年</span>
+                        </li>
+                        <li class="list-group-item d-flex">
+                            <i class="bi bi-star me-3"></i>
+                            <span>附近有餐厅和购物设施</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap" async defer></script>
+<script>
+    function initMap() {
+        const attractionLocation = { lat: {{ attraction.latitude }}, lng: {{ attraction.longitude }} };
+        const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 15,
+            center: attractionLocation,
+        });
+        const marker = new google.maps.Marker({
+            position: attractionLocation,
+            map: map,
+            title: "{{ attraction.name }}"
+        });
+    }
+</script>
+{% endblock %}

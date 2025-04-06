@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}香港旅游指南 - 首页{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- 首页横幅 -->
+    <div class="bg-image p-5 text-center shadow-1-strong rounded mb-5 text-white"
+         style="background-image: url('{{ url_for('static', filename='images/hong_kong_skyline.jpg') }}'); height: 400px; background-size: cover; background-position: center;">
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="bg-dark bg-opacity-50 p-4 rounded">
+                <h1 class="mb-3">探索香港的美丽与魅力</h1>
+                <h4 class="mb-3">亚洲国际大都会的购物、美食与景点</h4>
+                <a class="btn btn-primary" href="{{ url_for('list_attractions') }}">浏览景点</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 区域导航 -->
+    <section class="mb-5">
+        <h2 class="mb-4">香港热门区域</h2>
+        <div class="row">
+            {% for category in categories %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ category.name }}</h5>
+                        <p class="card-text">{{ category.description }}</p>
+                        <a href="{{ url_for('list_attractions', category_id=category.id) }}" class="btn btn-outline-primary">探索{{ category.name }}</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 热门景点 -->
+    <section class="mb-5">
+        <h2 class="mb-4">推荐景点</h2>
+        <div class="row">
+            {% for attraction in featured_attractions %}
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <img src="{{ url_for('static', filename='images/' + attraction.image_url) }}" class="card-img-top" alt="{{ attraction.name }}" style="height: 150px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ attraction.name }}</h5>
+                        <p class="card-text">{{ attraction.description[:100] }}{% if attraction.description|length > 100 %}...{% endif %}</p>
+                        <a href="{{ url_for('attraction_detail', id=attraction.id) }}" class="btn btn-sm btn-primary">查看详情</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 关于香港 -->
+    <section class="row mb-5">
+        <div class="col-md-6">
+            <h2>关于香港</h2>
+            <p>香港是一个充满活力的国际大都市，融合了东方与西方文化的独特魅力。这座城市以其壮观的天际线、美食天堂的美誉和丰富的购物选择而闻名于世。</p>
+            <p>从繁华的市中心到宁静的离岛，从传统的庙宇到现代的摩天大楼，香港提供了各种各样的体验，满足不同游客的需求。</p>
+        </div>
+        <div class="col-md-6">
+            <h2>旅游小贴士</h2>
+            <ul class="list-group">
+                <li class="list-group-item">香港的公共交通系统便捷高效，包括地铁、巴士、电车和渡轮</li>
+                <li class="list-group-item">建议购买八达通卡，可用于各种公共交通和便利店</li>
+                <li class="list-group-item">香港天气湿热，夏季(5-9月)温度高且多雨</li>
+                <li class="list-group-item">冬季(12-2月)相对凉爽干燥，是旅游的好时机</li>
+                <li class="list-group-item">香港是购物天堂，但记得货比三家</li>
+            </ul>
+        </div>
+    </section>
+</div>
+{% endblock %}

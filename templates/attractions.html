@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}香港旅游指南 - {% if category %}{{ category.name }}景点{% else %}所有景点{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>{% if category %}{{ category.name }}景点{% else %}所有香港景点{% endif %}</h1>
+            {% if category %}
+            <p class="lead">{{ category.description }}</p>
+            {% else %}
+            <p class="lead">探索香港各区的精彩景点</p>
+            {% endif %}
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex justify-content-end align-items-center h-100">
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown">
+                        按区域筛选
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('list_attractions') }}">所有景点</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% for cat in categories %}
+                        <li><a class="dropdown-item {% if category and category.id == cat.id %}active{% endif %}" href="{{ url_for('list_attractions', category_id=cat.id) }}">{{ cat.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 景点列表 -->
+    {% if attractions %}
+    <div class="row">
+        {% for attraction in attractions %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='images/' + attraction.image_url) }}" class="card-img-top" alt="{{ attraction.name }}" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ attraction.name }}</h5>
+                    <p class="card-text">{{ attraction.description[:150] }}{% if attraction.description|length > 150 %}...{% endif %}</p>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('attraction_detail', id=attraction.id) }}" class="btn btn-primary">查看详情</a>
+                        <a href="{{ url_for('get_directions', id=attraction.id) }}" class="btn btn-outline-success">路线指引</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        没有找到相关景点。
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
